@@ -30,21 +30,26 @@ def get_feature_and_dist_fns(feature_type):
 
 def evaluate_model(y_preds, y_true):
     confusion = confusion_matrix(y_true, y_preds)
-
-    TN = float(confusion[0][0])
-    FN = float(confusion[1][0])
-    TP = float(confusion[1][1])
-    FP = float(confusion[0][1])
+    eps = np.finfo(float).eps
+    try:
+        TN = float(confusion[0][0])
+        FN = float(confusion[1][0])
+        TP = float(confusion[1][1])
+        FP = float(confusion[0][1])
+    except:
+        FN = 0.
+        TP = 0.
+        FP = 0.
     metrics = {
         'TP': TP,
         'TN': TN,
         'FP': FP,
         'FN': FN,
-        'false negative ratio': FN / (FN + TP),
-        'filtration': TN / (TN + FP),
-        'true positive ratio': TP / (TP + FP),
-        'accuracy': (TP + TN) / (TP + FP + TN + FN),
-        'f1': (2 * TP) / (2 * TP + FP + FN)
+        'false negative ratio': FN / (FN + TP + eps),
+        'filtration': TN / (TN + FP + eps),
+        'true positive ratio': TP / (TP + FP + eps),
+        'accuracy': (TP + TN) / (TP + FP + TN + FN + eps),
+        'f1': (2 * TP) / (2 * TP + FP + FN + eps)
     }
     return metrics
 
@@ -83,6 +88,7 @@ def main():
     video_frames = VideoUtils.get_all_frames(args.num_frames, video_in, scale=args.scale, interval=1)
 
     print 'Retrieving %d labels from %s' % (args.num_frames, csv_in)
+    # 0 represents no difference between 2 frames, 1 represents difference
     Y_truth = DataUtils.get_differences(csv_in, args.object, limit=args.num_frames, interval=1, delay=args.frame_delay)
 
     header = init_header + ['feature', 'distance metric', 'threshold', 'filtration', 'true positive ratio']

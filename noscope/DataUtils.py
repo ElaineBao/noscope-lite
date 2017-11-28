@@ -48,12 +48,12 @@ def get_counts(csv_fname, OBJECTS=['person'], limit=None, interval=1, start=0):
 
 def get_differences(csv_fname, OBJECT, limit=None, interval=1, delay=1):
     def sym_diff(first, second):
-        first_objs = set(x['object_name'] for x in first if x['object_name'] == OBJECT)
-        second_objs = set(x['object_name'] for x in second if x['object_name'] == OBJECT)
+        first_objs = set(x['object_name'] for _, x in first.iterrows())
+        second_objs = set(x['object_name'] for _, x in second.iterrows())
         return len(first_objs.symmetric_difference(second_objs)) > 0
 
     labels = get_labels(csv_fname, limit=limit, interval=interval, start=delay)
-    return np.array([1 if sym_diff(labels[i], labels[i-delay]) else 0 for i in xrange(delay, limit, interval)])
+    return np.array([1 if sym_diff(labels.ix[i], labels.ix[i-delay]) else 0 for i in xrange(delay, limit, interval)])
 
 def get_binary(csv_fname, OBJECTS=['person'], limit=None, start=0, WINDOW=30):
     df = pd.read_csv(csv_fname)

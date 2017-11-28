@@ -3,15 +3,7 @@ import cv2
 import numpy as np
 from scipy.spatial.distance import euclidean, cityblock, chebyshev, cosine
 
-
-DIST_METRICS = [
-        ('euclidean', euclidean),
-        ('manhattan', cityblock),
-        ('chebyshev', chebyshev),
-        ('cosine', lambda x, y: -1*cosine(x, y)),
-        #('chisqr', lambda x, y: cv2.compareHist(x, y, cv2.HISTCMP_CHISQR)),
-        #('bhatta', lambda x, y: cv2.compareHist(x, y, cv2.HISTCMP_BHATTACHARYYA))
-]
+DIST_METRICS = ['euclidean', 'manhattan', 'chebyshev', 'cosine']
 
 def compute_feature(frame):
     sift = cv2.xfeatures2d.SIFT_create()
@@ -22,3 +14,12 @@ def compute_feature(frame):
     else:
         return np.zeros(128)
 
+def get_distance_fn(dist_metric):
+    if dist_metric == 'euclidean':
+        return euclidean
+    elif dist_metric == 'manhattan':
+        return cityblock
+    elif dist_metric == 'chebyshev':
+        return chebyshev
+    elif dist_metric == 'cosine':
+        return cosine
