@@ -3,7 +3,7 @@
 
 #include "tensorflow/noscope-lite/noscope_data.h"
 
-namespace noscope-lite {
+namespace noscope {
 
 // FIXME: should really fix this
 const cv::Size NoscopeData::kYOLOResol_(299, 299);
@@ -80,4 +80,4 @@ void NoscopeData::DumpAll(const std::string& fname) {
   fout.write((char *) &dist_data_[0], dist_data_.size() * sizeof(float));
 }
 
-} // namespace noscope-lite
+} // namespace noscope

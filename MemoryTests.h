@@ -7,7 +7,7 @@
 #include "tensorflow/core/framework/graph.pb.h"
 #include "tensorflow/core/graph/default_device.h"
 
-namespace noscope-lite {
+namespace noscope {
 
 using namespace tensorflow;
 
@@ -15,6 +15,6 @@ void MemoryLocationTests();
 
 void GPUCopyTest(Session* session);
 
-} // namespace noscope-lite
+} // namespace noscope
 
 #endif // TENSORFLOW_VUSE_MEMORYTESTS_H_

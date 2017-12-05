@@ -15,7 +15,7 @@ load(
 
 # tf_cuda_library(
 cc_binary(
-    name = "noscope-lite",
+    name = "noscope",
     copts = [
         "-I/usr/local/include", "-I/usr/local/include/opencv2", "-I/usr/local/include/opencv",
         "-O3", "-fopenmp"

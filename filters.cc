@@ -9,7 +9,7 @@
 #include "tensorflow/noscope-lite/filters.h"
 
 // ok C++
-namespace noscope-lite {
+namespace noscope {
 namespace filters {
 
 // FIXME
@@ -77,4 +77,4 @@ float GlobalMSE(const uint8_t *f1, const uint8_t *f2) {
 }
 
 } // namespace filters
-} // namespace noscope-lite
+} // namespace noscope

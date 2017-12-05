@@ -10,7 +10,7 @@
 
 
 // ok C++
-namespace noscope-lite {
+namespace noscope {
 namespace filters {
 
 typedef float (*DifferenceFilterFP)
@@ -35,6 +35,6 @@ float BlockedMSE(const uint8_t *f1, const uint8_t *f2);
 float GlobalMSE(const uint8_t *f1, const uint8_t *f2);
 
 } // namespace filters
-} // namespace noscope-lite
+} // namespace noscope
 
 #endif  // TENSORFLOW_VUSE_FILTERS_H_

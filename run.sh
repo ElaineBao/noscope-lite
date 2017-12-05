@@ -1,4 +1,4 @@
-./noscope-lite --diff_thresh=0.0 \
+./noscope --diff_thresh=0.0 \
     --distill_thresh_lower=0.0 \
     --distill_thresh_upper=0.0 \
     --skip=0 \

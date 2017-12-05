@@ -12,7 +12,7 @@
 #include "tensorflow/noscope-lite/noscope_data.h"
 
 
-namespace noscope-lite {
+namespace noscope {
 
 class NoscopeLabeler {
   friend class FrameData; // access the internals
@@ -21,9 +21,9 @@ class NoscopeLabeler {
   // tensorflow doesn't support unique_ptr
   NoscopeLabeler(tensorflow::Session *SmallCNN_Session,
               tensorflow::Session *LargeCNN_Session,
-              noscope-lite::filters::DifferenceFilter diff_filt,
+              noscope::filters::DifferenceFilter diff_filt,
               const std::string& avg_fname,
-              const noscope-lite::NoscopeData& data);
+              const noscope::NoscopeData& data);
 
   // This currently ignores the upper threshold
   void RunDifferenceFilter(const float lower_thresh, const float upper_thresh,
@@ -62,12 +62,12 @@ class NoscopeLabeler {
 
   const size_t kNbFrames_;
 
-  const noscope-lite::NoscopeData& all_data_;
+  const noscope::NoscopeData& all_data_;
 
   std::vector<Status> frame_status_;
   std::vector<bool> labels_;
 
-  const noscope-lite::filters::DifferenceFilter kDifferenceFilter_;
+  const noscope::filters::DifferenceFilter kDifferenceFilter_;
   std::vector<float> diff_confidence_;
 
   std::vector<int> cnn_frame_ind_;
@@ -84,6 +84,6 @@ class NoscopeLabeler {
   std::vector<tensorflow::Tensor> dist_tensors_;
 };
 
-} // namespace noscope-lite
+} // namespace noscope
 
 #endif  // TENSORFLOW_VUSE_VUSELABELER_H_
