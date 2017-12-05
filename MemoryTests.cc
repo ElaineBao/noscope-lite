@@ -15,9 +15,9 @@
 
 #include "cuda/include/cuda.h"
 
-#include "tensorflow/noscope/MemoryTests.h"
+#include "tensorflow/noscope-lite/MemoryTests.h"
 
-namespace noscope {
+namespace noscope-lite {
 
 using namespace tensorflow;
 
@@ -62,4 +62,4 @@ void GPUCopyTest(Session* session) {
   std::cout << outputs.size() << "\n";
 }
 
-} // namespace noscope
+} // namespace noscope-lite

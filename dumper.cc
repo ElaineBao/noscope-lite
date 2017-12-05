@@ -9,7 +9,7 @@
 
 #include "tensorflow/core/util/command_line_flags.h"
 
-#include "tensorflow/noscope/noscope_data.h"
+#include "tensorflow/noscope-lite/noscope_data.h"
 
 using tensorflow::Flag;
 
@@ -18,19 +18,19 @@ static bool file_exists(const std::string& name) {
   return f.good();
 }
 
-static noscope::NoscopeData* LoadVideo(const std::string& video, const std::string& dumped_videos,
+static noscope-lite::NoscopeData* LoadVideo(const std::string& video, const std::string& dumped_videos,
                                  const int kSkip, const int kNbFrames, const int kStartFrom) {
   auto start = std::chrono::high_resolution_clock::now();
-  noscope::NoscopeData *data = NULL;
+  noscope-lite::NoscopeData *data = NULL;
   if (dumped_videos == "/dev/null") {
-    data = new noscope::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
+    data = new noscope-lite::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
   } else {
     if (file_exists(dumped_videos)) {
       std::cerr << "Loading dumped video\n";
-      data = new noscope::NoscopeData(dumped_videos);
+      data = new noscope-lite::NoscopeData(dumped_videos);
     } else {
       std::cerr << "Dumping video\n";
-      data = new noscope::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
+      data = new noscope-lite::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
       data->DumpAll(dumped_videos);
     }
   }
@@ -65,6 +65,6 @@ int main(int argc, char* argv[]) {
     return -1;
   }
 
-  noscope::NoscopeData *data = LoadVideo(video, dumped_videos, kSkip, kNbFrames, kStartFrom);
+  noscope-lite::NoscopeData *data = LoadVideo(video, dumped_videos, kSkip, kNbFrames, kStartFrom);
   return 0;
 }

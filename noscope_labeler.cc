@@ -16,15 +16,15 @@
 
 #include "opencv2/opencv.hpp"
 
-#include "tensorflow/noscope/noscope_labeler.h"
+#include "tensorflow/noscope-lite/noscope_labeler.h"
 
-namespace noscope {
+namespace noscope-lite {
 
 NoscopeLabeler::NoscopeLabeler(tensorflow::Session *SmallCNN_Session,
               tensorflow::Session *LargeCNN_Session,
-              noscope::filters::DifferenceFilter diff_filt,
+              noscope-lite::filters::DifferenceFilter diff_filt,
               const std::string& avg_fname,
-              const noscope::NoscopeData& data):
+              const noscope-lite::NoscopeData& data):
     kNbFrames_(data.kNbFrames_),
     all_data_(data),
     frame_status_(kNbFrames_, kUnprocessed), labels_(kNbFrames_),
@@ -242,4 +242,4 @@ void NoscopeLabeler::DumpConfidences(const std::string& fname,
   }
 }
 
-} // namespace noscope
+} // namespace noscope-lite

@@ -6,10 +6,10 @@
 
 #include "opencv2/opencv.hpp"
 
-#include "tensorflow/noscope/filters.h"
+#include "tensorflow/noscope-lite/filters.h"
 
 // ok C++
-namespace noscope {
+namespace noscope-lite {
 namespace filters {
 
 // FIXME
@@ -77,4 +77,4 @@ float GlobalMSE(const uint8_t *f1, const uint8_t *f2) {
 }
 
 } // namespace filters
-} // namespace noscope
+} // namespace noscope-lite

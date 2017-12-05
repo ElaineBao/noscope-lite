@@ -4,7 +4,7 @@
 #include "opencv2/opencv.hpp"
 #include "opencv2/videoio.hpp"
 
-namespace noscope {
+namespace noscope-lite {
 
 class NoscopeData {
  public:
@@ -31,6 +31,6 @@ class NoscopeData {
   void DumpAll(const std::string& fname);
 };
 
-} // namespace noscope
+} // namespace noscope-lite
 
 #endif

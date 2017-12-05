@@ -30,7 +30,7 @@ def VideoIterator(video_fname, scale=None, interval=1, start=0):
         yield frame_ind, frame
 
 def VideoHistIterator(video_fname, scale=None, start=0):
-    from noscope.filters import ColorHistogram
+    from utils.filters import ColorHistogram
     vid_it = VideoIterator(video_fname, scale=scale, start=start)
     frame = 0
     while frame is not None:

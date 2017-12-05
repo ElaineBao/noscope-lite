@@ -1,6 +1,6 @@
 import tempfile
 
-import noscope
+import utils
 import numpy as np
 from math import log, ceil
 
@@ -27,9 +27,9 @@ class Learner():
     def test_eval(self):
         _, _, X_test, Y_test = self.data
         if self.regression:
-            return noscope.Models.evaluate_model_regression(self.model, X_test, Y_test)
+            return utils.Models.evaluate_model_regression(self.model, X_test, Y_test)
         else:
-            return noscope.Models.evaluate_model_multiclass(self.model, X_test, Y_test)
+            return utils.Models.evaluate_model_multiclass(self.model, X_test, Y_test)
 
     def xvalid_eval(self):
         X_all, Y_all, _, _ = self.data

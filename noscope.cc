@@ -13,11 +13,11 @@
 #include "tensorflow/core/graph/default_device.h"
 #include "tensorflow/core/util/command_line_flags.h"
 
-#include "tensorflow/noscope/mse.h"
-#include "tensorflow/noscope/filters.h"
-#include "tensorflow/noscope/MemoryTests.h"
-#include "tensorflow/noscope/noscope_labeler.h"
-#include "tensorflow/noscope/noscope_data.h"
+#include "tensorflow/noscope-lite/mse.h"
+#include "tensorflow/noscope-lite/filters.h"
+#include "tensorflow/noscope-lite/MemoryTests.h"
+#include "tensorflow/noscope-lite/noscope_labeler.h"
+#include "tensorflow/noscope-lite/noscope_data.h"
 
 using tensorflow::Flag;
 
@@ -48,19 +48,19 @@ static tensorflow::Session* InitSession(const std::string& graph_fname) {
   return session;
 }
 
-static noscope::NoscopeData* LoadVideo(const std::string& video, const std::string& dumped_videos,
+static noscope-lite::NoscopeData* LoadVideo(const std::string& video, const std::string& dumped_videos,
                                  const int kSkip, const int kNbFrames, const int kStartFrom) {
   auto start = std::chrono::high_resolution_clock::now();
-  noscope::NoscopeData *data = NULL;
+  noscope-lite::NoscopeData *data = NULL;
   if (dumped_videos == "/dev/null") {
-    data = new noscope::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
+    data = new noscope-lite::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
   } else {
     if (file_exists(dumped_videos)) {
       std::cerr << "Loading dumped video\n";
-      data = new noscope::NoscopeData(dumped_videos);
+      data = new noscope-lite::NoscopeData(dumped_videos);
     } else {
       std::cerr << "Dumping video\n";
-      data = new noscope::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
+      data = new noscope-lite::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
       data->DumpAll(dumped_videos);
     }
   }
@@ -71,11 +71,11 @@ static noscope::NoscopeData* LoadVideo(const std::string& video, const std::stri
   return data;
 }
 
-noscope::filters::DifferenceFilter GetDiffFilter(const bool kUseBlocked,
+noscope-lite::filters::DifferenceFilter GetDiffFilter(const bool kUseBlocked,
                                               const bool kSkipDiffDetection) {
-  noscope::filters::DifferenceFilter nothing{noscope::filters::DoNothing, "DoNothing"};
-  noscope::filters::DifferenceFilter blocked{noscope::filters::BlockedMSE, "BlockedMSE"};
-  noscope::filters::DifferenceFilter global{noscope::filters::GlobalMSE, "GlobalMSE"};
+  noscope-lite::filters::DifferenceFilter nothing{noscope-lite::filters::DoNothing, "DoNothing"};
+  noscope-lite::filters::DifferenceFilter blocked{noscope-lite::filters::BlockedMSE, "BlockedMSE"};
+  noscope-lite::filters::DifferenceFilter global{noscope-lite::filters::GlobalMSE, "GlobalMSE"};
 
   if (kSkipDiffDetection) {
     return nothing;
@@ -147,15 +147,15 @@ int main(int argc, char* argv[]) {
   }
 
   if (diff_detection_weights != "/dev/null" && !kSkipDiffDetection) {
-    noscope::filters::LoadWeights(diff_detection_weights);
+    noscope-lite::filters::LoadWeights(diff_detection_weights);
   }
 
   tensorflow::Session *SmallCNN_Session = InitSession(small_cnn_graph);
   tensorflow::Session *LargeCNN_Session = InitSession(big_cnn_graph);
-  noscope::NoscopeData *data = LoadVideo(video, dumped_videos, kSkip, kNbFrames, kStartFrom);
-  noscope::filters::DifferenceFilter df = GetDiffFilter(kUseBlocked, kSkipDiffDetection);
+  noscope-lite::NoscopeData *data = LoadVideo(video, dumped_videos, kSkip, kNbFrames, kStartFrom);
+  noscope-lite::filters::DifferenceFilter df = GetDiffFilter(kUseBlocked, kSkipDiffDetection);
 
-  noscope::NoscopeLabeler labeler = noscope::NoscopeLabeler(
+  noscope-lite::NoscopeLabeler labeler = noscope-lite::NoscopeLabeler(
       SmallCNN_Session,
       LargeCNN_Session,
       df,

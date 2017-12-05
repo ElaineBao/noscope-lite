@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <x86intrin.h>
 
-#include "tensorflow/noscope/mse.h"
+#include "tensorflow/noscope-lite/mse.h"
 
-namespace noscope {
+namespace noscope-lite {
 
 // http://stackoverflow.com/questions/23189488/horizontal-sum-of-32-bit-floats-in-256-bit-avx-vector
 static inline float _mm256_reduce_add_ps(__m256 x) {
@@ -50,4 +50,4 @@ float MSE_AVX2(const uint8_t *f1, const uint8_t *f2, const size_t N) {
   return sum / (float) N;
 }
 
-} // namespace noscope
+} // namespace noscope-lite
