@@ -58,11 +58,11 @@ def get_differences(csv_fname, OBJECT, limit=None, interval=1, delay=1):
 def get_binary(csv_fname, OBJECTS=['person'], limit=None, start=0, WINDOW=30):
     df = pd.read_csv(csv_fname)
     df = df[df['object_name'].isin(OBJECTS)]
-    groups = df.set_index('frame')
-    counts = map(lambda i: i in groups.index, range(start, limit + start))
+    groups = df.set_index('frame') # 同一帧下检测到的特定object作为一个group
+    counts = map(lambda i: i in groups.index, range(start, limit + start)) #哪些帧有物体
     counts = np.array(counts)
 
-    smoothed_counts = np.convolve(np.ones(WINDOW), np.ravel(counts), mode='same') > WINDOW * 0.7
+    smoothed_counts = np.convolve(np.ones(WINDOW), np.ravel(counts), mode='same') > WINDOW * 0.7 #做平滑操作，相当于前后帧如果中间有一帧没检测到物体也可以补上
     print np.sum(smoothed_counts != counts), np.sum(smoothed_counts)
     smoothed_counts = smoothed_counts.reshape(len(counts), 1)
     counts = smoothed_counts

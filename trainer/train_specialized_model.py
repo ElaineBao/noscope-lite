@@ -1,8 +1,8 @@
 import itertools
 import argparse
 import numpy as np
-from noscope import np_utils, VideoUtils, DataUtils
-from noscope import Models
+from utils import np_utils, VideoUtils, DataUtils
+from utils import Models
 def to_test_train(avg_fname, all_frames, all_counts, train_ratio=0.6):
 	print all_frames.shape
 	assert len(all_frames) == len(all_counts), 'Frame length should equal counts length'
@@ -55,7 +55,7 @@ def get_data(csv_fname, video_fname, avg_fname,
 			print 'class %d: %d' % (i, np.sum(classes == i))
 
 	print '\tParsing %s, extracting %s' % (csv_fname, str(OBJECTS))
-	all_counts = DataUtils.get_binary(csv_fname, limit=num_frames, OBJECTS=OBJECTS, start=start_frame)
+	all_counts = DataUtils.get_binary(csv_fname, limit=num_frames, OBJECTS=OBJECTS, start=start_frame) #返回的是所有帧是否有特定物体的二值矩阵
 	print '\tRetrieving all frames from %s' % video_fname
 	all_frames = VideoUtils.get_all_frames(
 			len(all_counts), video_fname, scale=resol, start=start_frame)

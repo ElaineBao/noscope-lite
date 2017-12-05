@@ -2,8 +2,8 @@
 
 import argparse
 import numpy as np
-from noscope import VideoUtils, DataUtils, StatsUtils
-from noscope.filters import HOG, RawImage, ColorHistogram, SIFT
+from utils import VideoUtils, DataUtils, StatsUtils
+from utils.filters import HOG, RawImage, ColorHistogram, SIFT
 from sklearn.metrics import confusion_matrix
 
 
