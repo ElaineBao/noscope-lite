@@ -178,7 +178,7 @@ void NoscopeLabeler::RunLargeCNN(const int class_id, const float conf_thresh) {
     std::cout<<"image shape:" << resized_tensor.shape().DebugString() << ",tensor type:"<< resized_tensor.dtype();
 
     std::vector<string> output_layer ={ "detection_boxes:0", "detection_scores:0", "detection_classes:0", "num_detections:0" };
-    tensorflow::Status run_status = (*large_session_)->Run({{"image_tensor", resized_tensor}},
+    tensorflow::Status run_status = large_session_->Run({{"image_tensor", resized_tensor}},
                                    output_layer, {}, &outputs);
     tensorflow::TTypes<float>::Flat scores = outputs[1].flat<float>();
     tensorflow::TTypes<float>::Flat classes = outputs[2].flat<float>();
