@@ -26,6 +26,7 @@ class NoscopeLabeler {
               const noscope::NoscopeData& data);
 
   // This currently ignores the upper threshold
+
   void RunDifferenceFilter(const float lower_thresh, const float upper_thresh,
                            const bool const_ref, const size_t kRef);
 

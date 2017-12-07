@@ -20,7 +20,7 @@ class NoscopeData {
   const size_t kNbFrames_;
   const size_t kSkip_;
 
-  std::vector<float> yolo_data_;
+  std::vector<uint8_t> yolo_data_;
   std::vector<uint8_t> diff_data_;
   std::vector<float> dist_data_;
 

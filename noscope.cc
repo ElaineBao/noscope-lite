@@ -32,14 +32,14 @@ static tensorflow::Session* InitSession(const std::string& graph_fname) {
   tensorflow::GraphDef graph_def;
   // YOLO needs some memory
   //opts.config.mutable_gpu_options()->set_per_process_gpu_memory_fraction(0.9);
-  opts.config.mutable_gpu_options()->set_allow_growth(true);
+  //opts.config.mutable_gpu_options()->set_allow_growth(true);
   tensorflow::Status status = NewSession(opts, &session);
   TF_CHECK_OK(status);
 
   status = tensorflow::ReadBinaryProto(
       tensorflow::Env::Default(),
       graph_fname, &graph_def);
-  tensorflow::graph::SetDefaultDevice("/gpu:0", &graph_def);
+  //tensorflow::graph::SetDefaultDevice("/gpu:0", &graph_def);
   TF_CHECK_OK(status);
 
   status = session->Create(graph_def);
@@ -53,6 +53,7 @@ static noscope::NoscopeData* LoadVideo(const std::string& video, const std::stri
   auto start = std::chrono::high_resolution_clock::now();
   noscope::NoscopeData *data = NULL;
   if (dumped_videos == "/dev/null") {
+    std::cerr << "Loading new video\n";
     data = new noscope::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
   } else {
     if (file_exists(dumped_videos)) {
@@ -88,24 +89,24 @@ noscope::filters::DifferenceFilter GetDiffFilter(const bool kUseBlocked,
 }
 
 int main(int argc, char* argv[]) {
-  std::string small_cnn_graph;
+  std::string small_cnn_graph="/dev/null";
   std::string big_cnn_graph;
   std::string video;
-  std::string avg_fname;
-  std::string confidence_csv;
-  std::string diff_thresh_str;
-  std::string distill_thresh_lower_str, distill_thresh_upper_str;
-  std::string conf_thresh_str;
-  std::string skip;
-  std::string nb_frames;
-  std::string start_from;
-  std::string target_object_id;
-  std::string skip_small_cnn;
-  std::string skip_diff_detection;
-  std::string dumped_videos;
-  std::string diff_detection_weights;
-  std::string use_blocked;
-  std::string ref_image;
+  std::string avg_fname="avg.txt";
+  std::string confidence_csv="conf.csv";
+  std::string diff_thresh_str="0";
+  std::string distill_thresh_lower_str="0", distill_thresh_upper_str="0";
+  std::string conf_thresh_str="0";
+  std::string skip="1";
+  std::string nb_frames="12400";
+  std::string start_from="0";
+  std::string target_object_id="0";
+  std::string skip_small_cnn="0";
+  std::string skip_diff_detection="0";
+  std::string dumped_videos="/dev/null";
+  std::string diff_detection_weights="/dev/null";
+  std::string use_blocked="0";
+  std::string ref_image="0";
   std::vector<Flag> flag_list = {
       Flag("small_cnn_graph", &small_cnn_graph, "Small CNN Graph to be executed"),
       Flag("video", &video, "Video to load"),
@@ -116,16 +117,16 @@ int main(int argc, char* argv[]) {
       Flag("distill_thresh_lower", &distill_thresh_lower_str, "Distill threshold (lower)"),
       Flag("distill_thresh_upper", &distill_thresh_upper_str, "Distill threshold (upper)"),
       Flag("conf_thresh", &conf_thresh_str, "Confidence threshold for large cnn"),
-      Flag("skip", &skip, "Number of frames to skip"),
+      Flag("skip", &skip, "Number of frames to skip, minimal is 1"),
       Flag("nb_frames", &nb_frames, "Number of frames to read"),
       Flag("start_from", &start_from, "Where to start from"),
       Flag("target_object_id", &target_object_id, "class id in big cnn model (trained in coco db)"),
       Flag("skip_small_cnn", &skip_small_cnn, "0/1 skip small CNN or not"),
       Flag("skip_diff_detection", &skip_diff_detection, "0/1 skip diff detection or not"),
       Flag("dumped_videos", &dumped_videos, ""),
-      Flag("diff_detection_weights", &diff_detection_weights, "Difference detection weights"),
+      Flag("diff_detection_weights", &diff_detection_weights, "Difference detection weights(for blocked DD)"),
       Flag("use_blocked", &use_blocked, "0/1 whether or not to use blocked DD"),
-      Flag("ref_image", &ref_image, "reference image"),
+      Flag("ref_image", &ref_image, "reference image,input index of frame"),
   };
   std::string usage = tensorflow::Flags::Usage(argv[0], flag_list);
   const bool parse_result = tensorflow::Flags::Parse(&argc, argv, flag_list);

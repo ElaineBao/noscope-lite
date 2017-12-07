@@ -16,7 +16,7 @@ NoscopeData::NoscopeData(const std::string& fname,
     kSkip_(kSkip),
     yolo_data_(kYOLOFrameSize_ * kNbFrames_),
     diff_data_(kDiffFrameSize_ * kNbFrames_),
-    dist_data_(kDistFrameSize_ * kNbFrames_) {
+    dist_data_(kDistFrameSize_ * kNbFrames_){
   cv::VideoCapture cap(fname);
   if (kStart > 0)
     cap.set(cv::CAP_PROP_POS_FRAMES, kStart - 1);
@@ -48,7 +48,7 @@ NoscopeData::NoscopeData(const std::string& fname,
         throw std::runtime_error("dist frame f is not continuous");
       }
 
-      memcpy(&yolo_data_[ind * kYOLOFrameSize_], yolo_frame.data, kYOLOFrameSize_ * sizeof(float));
+      memcpy(&yolo_data_[ind * kYOLOFrameSize_], yolo_frame.data, kYOLOFrameSize_);
       memcpy(&diff_data_[ind * kDiffFrameSize_], diff_frame.data, kDiffFrameSize_);
       memcpy(&dist_data_[ind * kDistFrameSize_], dist_frame_f.data, kDistFrameSize_ * sizeof(float));
     }

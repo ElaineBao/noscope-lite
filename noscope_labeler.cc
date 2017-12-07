@@ -38,10 +38,12 @@ NoscopeLabeler::NoscopeLabeler(tensorflow::Session *SmallCNN_Session,
   std::ifstream is(avg_fname);
   std::istream_iterator<float> start(is), end;
   std::vector<float> nums(start, end);
+
   if (nums.size() != NoscopeData::kDistFrameSize_) {
     throw std::runtime_error("nums not right size");
   }
   memcpy(avg_.data, &nums[0], NoscopeData::kDistFrameSize_ * sizeof(float));
+
 }
 
 void NoscopeLabeler::RunDifferenceFilter(const float lower_thresh,const float upper_thresh,const bool const_ref,const size_t kRef) {
@@ -123,7 +125,7 @@ void NoscopeLabeler::RunSmallCNN(const float lower_thresh, const float upper_thr
 
 
     std::vector<tensorflow::Tensor> outputs;
-    std::vector<std::pair<string, tensorflow::Tensor> > inputs = {
+    std::vector<std::pair<string, tensorflow::Tensor>> inputs = {
       {"input_img", input},
       // {"keras_learning_phase", learning_phase},
     };
@@ -157,31 +159,26 @@ void NoscopeLabeler::RunSmallCNN(const float lower_thresh, const float upper_thr
 void NoscopeLabeler::RunLargeCNN(const int class_id, const float conf_thresh) {
   for (size_t i = 0; i < kNbFrames_; i++) {
     // Run LargeCNN on every unprocessed frame
-    if (frame_status_[i] == kDistillFiltered)
-      continue;
-    if (frame_status_[i] == kDiffFiltered)
-      continue;
-
+    using namespace tensorflow;
     std::vector<Tensor> outputs;
-    tensorflow::Tensor input_tensor(DT_FLOAT,
+    Tensor input_tensor(DT_UINT8,
                  TensorShape({1,
                              NoscopeData::kYOLOResol_.height,
                              NoscopeData::kYOLOResol_.width,
                              kNbChannels_}));
-    auto input_mapped = input_tensor.tensor<float, 4>();
-    float *tensor_start = &input_mapped(0, 0, 0, 0);
-    const std::vector<float>& kYoloData = all_data_.yolo_data_;
-    const float *input = &kYoloData[i * all_data_.kYOLOFrameSize_];
-    float *normalized_input = tensor_start + all_data_.kYOLOFrameSize_;
-    for (size_t k = 0; k < all_data_.kYOLOFrameSize_; k++)
-      normalized_input[k] = input[k] / 255.;
+    auto input_mapped = input_tensor.tensor<uint8_t, 4>();
+    uint8_t *tensor_start = &input_mapped(0, 0, 0, 0);
+    const std::vector<uint8_t>& kYoloData = all_data_.yolo_data_;
+    const uint8_t *input = &kYoloData[i * all_data_.kYOLOFrameSize_];
+    uint8_t *normalized_input = tensor_start; //+ i * all_data_.kYOLOFrameSize_;
 
-    //string input_layer = "image_tensor:0";
-    std::vector<std::pair<string, tensorflow::Tensor> > inputs = {
-      {"image_tensor", input_tensor},
-    };
+    for (size_t k = 0; k < all_data_.kYOLOFrameSize_; k++)
+      normalized_input[k] = input[k];
+    const Tensor& resized_tensor = input_tensor;
+    std::cout<<"image shape:" << resized_tensor.shape().DebugString() << ",tensor type:"<< resized_tensor.dtype();
+
     std::vector<string> output_layer ={ "detection_boxes:0", "detection_scores:0", "detection_classes:0", "num_detections:0" };
-    tensorflow::Status run_status = large_session_->Run(inputs,
+    tensorflow::Status run_status = (*large_session_)->Run({{"image_tensor", resized_tensor}},
                                    output_layer, {}, &outputs);
     tensorflow::TTypes<float>::Flat scores = outputs[1].flat<float>();
     tensorflow::TTypes<float>::Flat classes = outputs[2].flat<float>();
@@ -193,6 +190,7 @@ void NoscopeLabeler::RunLargeCNN(const int class_id, const float conf_thresh) {
         if (classes(j) == class_id && scores(j) > class_score)
           class_score = scores(j);
     }
+    yolo_confidence_[i] = class_score;
     labels_[i] = class_score > conf_thresh;
     frame_status_[i] = kYoloLabeled;
   }
