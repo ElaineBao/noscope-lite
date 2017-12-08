@@ -25,10 +25,6 @@ class NoscopeData {
   std::vector<float> small_cnn_data_;
 
   NoscopeData(const std::string& fname, const size_t kSkip, const size_t kNbFrames, const size_t kStart);
-
-  NoscopeData(const std::string& fname);
-
-  void DumpAll(const std::string& fname);
 };
 
 } // namespace noscope

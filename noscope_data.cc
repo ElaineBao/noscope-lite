@@ -55,29 +55,4 @@ NoscopeData::NoscopeData(const std::string& fname,
   }
 }
 
-static std::ifstream::pos_type filesize(const std::string& fname) {
-  std::ifstream in(fname, std::ifstream::ate | std::ifstream::binary);
-  return in.tellg();
-}
-NoscopeData::NoscopeData(const std::string& fname) :
-    kNbFrames_(filesize(fname) / (kLargeCNNFrameSize_ + kDiffFrameSize_ + kSmallCNNFrameSize_* sizeof(float))),
-    kSkip_(1),
-    large_cnn_data_(kLargeCNNFrameSize_ * kNbFrames_),
-    diff_data_(kDiffFrameSize_ * kNbFrames_),
-    small_cnn_data_(kSmallCNNFrameSize_ * kNbFrames_) {
-  std::cerr << kNbFrames_ << "\n";
-  std::ifstream in(fname, std::ifstream::binary);
-  in.read((char *) &large_cnn_data_[0], large_cnn_data_.size() * sizeof(float));
-  in.read((char *) &diff_data_[0], diff_data_.size());
-  in.read((char *) &small_cnn_data_[0], small_cnn_data_.size() * sizeof(float));
-}
-
-void NoscopeData::DumpAll(const std::string& fname) {
-  std::cerr << "Dumping " << kNbFrames_ << "\n";
-  std::ofstream fout(fname, std::ios::binary | std::ios::out);
-  fout.write((char *) &large_cnn_data_[0], large_cnn_data_.size() * sizeof(float));
-  fout.write((char *) &diff_data_[0], diff_data_.size());
-  fout.write((char *) &small_cnn_data_[0], small_cnn_data_.size() * sizeof(float));
-}
-
 } // namespace noscope

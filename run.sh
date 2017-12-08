@@ -11,7 +11,6 @@
     --large_cnn_graph="/workspace/data/videodata/cnn_models/faster_rcnn_resnet101_coco_model.pb" \
     --video="/workspace/data/videodata/coral-reef-long.mp4"  \
     --confidence_csv="coral-reef-long-result.csv" \
-    --dumped_videos="/dev/null" \
     --diff_detection_weights="/dev/null" \
     --start_from=0 \
     --use_blocked=0 \

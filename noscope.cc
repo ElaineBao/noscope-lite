@@ -48,25 +48,15 @@ static tensorflow::Session* InitSession(const std::string& graph_fname) {
   return session;
 }
 
-static noscope::NoscopeData* LoadVideo(const std::string& video, const std::string& dumped_videos,
-                                 const int kSkip, const int kNbFrames, const int kStartFrom) {
+static noscope::NoscopeData* LoadVideo(const std::string& video, const int kSkip,
+                                        const int kNbFrames, const int kStartFrom) {
   auto start = std::chrono::high_resolution_clock::now();
+
   noscope::NoscopeData *data = NULL;
-  if (dumped_videos == "/dev/null") {
-    std::cerr << "Loading new video\n";
-    data = new noscope::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
-  } else {
-    if (file_exists(dumped_videos)) {
-      std::cerr << "Loading dumped video\n";
-      data = new noscope::NoscopeData(dumped_videos);
-    } else {
-      std::cerr << "Dumping video\n";
-      data = new noscope::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
-      data->DumpAll(dumped_videos);
-    }
-  }
+  std::cerr << "Loading new video\n";
+  data = new noscope::NoscopeData(video, kSkip, kNbFrames, kStartFrom);
+
   auto end = std::chrono::high_resolution_clock::now();
-  std::cout << "Loaded video\n";
   std::chrono::duration<double> diff = end - start;
   std::cout << "Time to load (and resize) video: " << diff.count() << " s" << std::endl;
   return data;
@@ -103,7 +93,6 @@ int main(int argc, char* argv[]) {
   std::string target_object_id="1";
   std::string skip_small_cnn="0";
   std::string skip_diff_detection="0";
-  std::string dumped_videos="/dev/null";
   std::string diff_detection_weights="/dev/null";
   std::string use_blocked="0";
   std::string ref_image="0";
@@ -123,7 +112,6 @@ int main(int argc, char* argv[]) {
       Flag("target_object_id", &target_object_id, "class id in big cnn model (trained in coco db)"),
       Flag("skip_small_cnn", &skip_small_cnn, "0/1 skip small CNN or not"),
       Flag("skip_diff_detection", &skip_diff_detection, "0/1 skip diff detection or not"),
-      Flag("dumped_videos", &dumped_videos, ""),
       Flag("diff_detection_weights", &diff_detection_weights, "Difference detection weights(for blocked DD)"),
       Flag("use_blocked", &use_blocked, "0/1 whether or not to use blocked DD"),
       Flag("ref_image", &ref_image, "reference image,input index of frame"),
@@ -153,7 +141,7 @@ int main(int argc, char* argv[]) {
 
   tensorflow::Session *SmallCNN_Session = InitSession(small_cnn_graph);
   tensorflow::Session *LargeCNN_Session = InitSession(large_cnn_graph);
-  noscope::NoscopeData *data = LoadVideo(video, dumped_videos, kSkip, kNbFrames, kStartFrom);
+  noscope::NoscopeData *data = LoadVideo(video, kSkip, kNbFrames, kStartFrom);
   noscope::filters::DifferenceFilter df = GetDiffFilter(kUseBlocked, kSkipDiffDetection);
 
   noscope::NoscopeLabeler labeler = noscope::NoscopeLabeler(

@@ -13,7 +13,7 @@ load(
     "tf_cuda_library"
 )
 
-# tf_cuda_library(
+
 cc_binary(
     name = "noscope",
     copts = [
@@ -29,7 +29,7 @@ cc_binary(
         "-lopencv_highgui",
         "-lopencv_videoio"
     ],
-    srcs = glob(["*.h"]) + glob(["*.cc"], exclude=["dumper.cc"]),
+    srcs = glob(["*.h"]) + glob(["*.cc"]),
     deps = [
         "//tensorflow/core:tensorflow",
         "//tensorflow/cc:cc_ops",
@@ -38,27 +38,5 @@ cc_binary(
         "//tensorflow/core:cuda",
         "//tensorflow/core:gpu_lib",
         "@local_config_cuda//cuda:cuda_headers"
-    ]
-)
-
-cc_binary(
-    name = "dumper",
-    copts = [
-        "-I/usr/local/include", "-I/usr/local/include/opencv2", "-I/usr/local/include/opencv",
-        "-O3", "-fopenmp"
-    ],
-    linkopts = [
-        "-fopenmp",
-        "-L/usr/local/lib",
-        "-lopencv_core",
-        "-lopencv_imgcodecs",
-        "-lopencv_imgproc",
-        "-lopencv_highgui",
-        "-lopencv_videoio"
-    ],
-    srcs = glob(["noscope_data.h"]) + glob(["noscope_data.cc", "dumper.cc"]),
-    deps = [
-        "//tensorflow/core:tensorflow",
-        "//tensorflow/cc:scope",
     ]
 )
