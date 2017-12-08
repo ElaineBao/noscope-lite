@@ -39,6 +39,7 @@ class NoscopeLabeler {
   void DumpConfidences(const std::string& fname,
                        const std::string& model_name,
                        const size_t kSkip,
+                       const size_t kStartFrom,
                        const bool kSkipSmallCNN,
                        const float diff_thresh,
                        const float small_cnn_thresh_lower,

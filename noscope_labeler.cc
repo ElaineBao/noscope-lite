@@ -220,6 +220,7 @@ void NoscopeLabeler::RunLargeCNN(const int class_id, const float large_cnn_thres
 void NoscopeLabeler::DumpConfidences(const std::string& fname,
                                   const std::string& model_name,
                                   const size_t kSkip,
+                                  const size_t kStartFrom,
                                   const bool kSkipSmallCNN,
                                   const float diff_thresh,
                                   const float small_cnn_thresh_lower,
@@ -244,7 +245,7 @@ void NoscopeLabeler::DumpConfidences(const std::string& fname,
 
   csv_file << "# frame,status,diff_confidence,small_cnn_confidence,large_cnn_confidence,label\n";
   for (size_t i = 0; i < kNbFrames_; i++) {
-    csv_file << (kSkip*i + 1) << ",";
+    csv_file << (kSkip*i + kStartFrom) << ",";
     csv_file << frame_status_[i] << ",";
     csv_file << diff_confidence_[i] << ",";
     csv_file << small_cnn_confidence_[i] << ",";
@@ -253,7 +254,7 @@ void NoscopeLabeler::DumpConfidences(const std::string& fname,
 
     // repeat the previous label for skipped frames
     for(size_t j = 0; j < kSkip-1; j++){
-      csv_file << (kSkip*i + j + 1) << ",";
+      csv_file << (kSkip*i + j + kStartFrom + 1) << ",";
       csv_file << kSkipped << ",";
       csv_file << 0 << ",";
       csv_file << 0 << ",";

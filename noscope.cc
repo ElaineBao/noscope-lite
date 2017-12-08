@@ -182,6 +182,7 @@ int main(int argc, char* argv[]) {
   labeler.DumpConfidences(confidence_csv,
                           small_cnn_graph,
                           kSkip,
+                          kStartFrom,
                           kSkipSmallCNN,
                           diff_thresh,
                           small_cnn_thresh_lower,
