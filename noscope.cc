@@ -96,11 +96,11 @@ int main(int argc, char* argv[]) {
   std::string confidence_csv="conf.csv";
   std::string diff_thresh_str="0";
   std::string small_cnn_thresh_lower_str="0", small_cnn_thresh_upper_str="0";
-  std::string large_cnn_str="0";
+  std::string large_cnn_thresh_str="0";
   std::string skip="1";
   std::string nb_frames="12400";
   std::string start_from="0";
-  std::string target_object_id="0";
+  std::string target_object_id="1";
   std::string skip_small_cnn="0";
   std::string skip_diff_detection="0";
   std::string dumped_videos="/dev/null";
@@ -166,7 +166,8 @@ int main(int argc, char* argv[]) {
   std::cerr << "Loaded NoscopeLabeler\n";
 
   auto start = std::chrono::high_resolution_clock::now();
-  labeler.RunDifferenceFilter(diff_thresh, 10000000, kUseBlocked, kRefImage);
+  if (!kSkipDiffDetection)
+    labeler.RunDifferenceFilter(diff_thresh, 10000000, kUseBlocked, kRefImage);
   auto diff_end = std::chrono::high_resolution_clock::now();
   if (!kSkipSmallCNN) {
     labeler.PopulateCNNFrames();

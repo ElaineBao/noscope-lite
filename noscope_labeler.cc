@@ -145,7 +145,6 @@ void NoscopeLabeler::RunSmallCNN(const float lower_thresh, const float upper_thr
           s = kSmallCNNFiltered;
         } else {
           s = kSmallCNNUnfiltered;
-          large_cnn_frame_ind_.push_back(kInd);
         }
         frame_status_[kInd] = s;
       }
@@ -156,6 +155,14 @@ void NoscopeLabeler::RunSmallCNN(const float lower_thresh, const float upper_thr
 
 void NoscopeLabeler::RunLargeCNN(const int class_id, const float large_cnn_thresh) {
   using namespace tensorflow;
+  for (size_t i = 0; i < kNbFrames_; i++) {
+      // Run YOLO on every unprocessed frame
+      if (frame_status_[i] == kSmallCNNFiltered)
+        continue;
+      if (frame_status_[i] == kDiffFiltered)
+        continue;
+      large_cnn_frame_ind_.push_back(i);
+  }
 
   // Round up
   const size_t kNbLargeCNNFrames = large_cnn_frame_ind_.size();
@@ -177,7 +184,7 @@ void NoscopeLabeler::RunLargeCNN(const int class_id, const float large_cnn_thres
     #pragma omp parallel for
     for (size_t j_im = 0; j_im < kImagesToRun; j_im++) {
       const size_t kImgInd = i_loop * kMaxLargeCNNBatch_ + j_im;
-      float *output = tensor_start + j_im * kLargeCNNFrameSize;
+      uint8_t *output = tensor_start + j_im * kLargeCNNFrameSize;
       const uint8_t *input = &kLargeCNNData[large_cnn_frame_ind_[kImgInd] * kLargeCNNFrameSize];
       for (size_t k = 0; k < kLargeCNNFrameSize; k++)
         output[k] = input[k];
@@ -189,14 +196,14 @@ void NoscopeLabeler::RunLargeCNN(const int class_id, const float large_cnn_thres
                                     "detection_classes:0", "num_detections:0"}, {}, &outputs);
 
     {
-      tensorflow::TTypes<float>::Flat scores = outputs[1].flat<float>();
-      tensorflow::TTypes<float>::Flat classes = outputs[2].flat<float>();
-      tensorflow::TTypes<float>::Flat num_detections = outputs[3].flat<float>();
+      auto scores = outputs[1].tensor<float, 2>();
+      auto classes = outputs[2].tensor<float, 2>();
+      auto num_det = outputs[3].tensor<float, 1>();
 
       for (size_t j_im = 0; j_im < kImagesToRun; j_im++) {
         const int kInd = large_cnn_frame_ind_[i_loop * kMaxLargeCNNBatch_ + j_im];
         float class_score = 0;
-        for(size_t i_det = 0; i_det < num_detections(j_im);++i_det)
+        for(size_t i_det = 0; i_det < num_det(j_im);++i_det)
         {
             if (classes(j_im,i_det) == class_id && scores(j_im,i_det) > class_score)
               class_score = scores(j_im, i_det);
@@ -205,7 +212,9 @@ void NoscopeLabeler::RunLargeCNN(const int class_id, const float large_cnn_thres
         labels_[kInd] = class_score > large_cnn_thresh;
         frame_status_[kInd] = kLargeCNNLabeled;
       }
+
     }
+  }
 }
 
 void NoscopeLabeler::DumpConfidences(const std::string& fname,

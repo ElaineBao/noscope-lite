@@ -2,7 +2,7 @@
     --small_cnn_thresh_lower=0.4 \
     --small_cnn_thresh_upper=0.8 \
     --large_cnn_thresh=0.8  \
-    --target_object_id=0 \
+    --target_object_id=1 \
     --skip=1 \
     --skip_small_cnn=0 \
     --skip_diff_detection=0 \
