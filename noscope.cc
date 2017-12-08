@@ -30,7 +30,7 @@ static tensorflow::Session* InitSession(const std::string& graph_fname) {
   tensorflow::Session *session;
   tensorflow::SessionOptions opts;
   tensorflow::GraphDef graph_def;
-  // YOLO needs some memory
+  // LargeCNN needs some memory
   //opts.config.mutable_gpu_options()->set_per_process_gpu_memory_fraction(0.9);
   //opts.config.mutable_gpu_options()->set_allow_growth(true);
   tensorflow::Status status = NewSession(opts, &session);
@@ -90,13 +90,13 @@ noscope::filters::DifferenceFilter GetDiffFilter(const bool kUseBlocked,
 
 int main(int argc, char* argv[]) {
   std::string small_cnn_graph="/dev/null";
-  std::string big_cnn_graph;
+  std::string large_cnn_graph;
   std::string video;
   std::string avg_fname="avg.txt";
   std::string confidence_csv="conf.csv";
   std::string diff_thresh_str="0";
-  std::string distill_thresh_lower_str="0", distill_thresh_upper_str="0";
-  std::string conf_thresh_str="0";
+  std::string small_cnn_thresh_lower_str="0", small_cnn_thresh_upper_str="0";
+  std::string large_cnn_str="0";
   std::string skip="1";
   std::string nb_frames="12400";
   std::string start_from="0";
@@ -110,13 +110,13 @@ int main(int argc, char* argv[]) {
   std::vector<Flag> flag_list = {
       Flag("small_cnn_graph", &small_cnn_graph, "Small CNN Graph to be executed"),
       Flag("video", &video, "Video to load"),
-      Flag("big_cnn_graph", &big_cnn_graph, "Big CNN Graph to be executed"),
+      Flag("large_cnn_graph", &large_cnn_graph, "Big CNN Graph to be executed"),
       Flag("avg_fname", &avg_fname, "Filename with the average (txt)"),
       Flag("confidence_csv", &confidence_csv, "CSV to output confidences to"),
       Flag("diff_thresh", &diff_thresh_str, "Difference filter threshold"),
-      Flag("distill_thresh_lower", &distill_thresh_lower_str, "Distill threshold (lower)"),
-      Flag("distill_thresh_upper", &distill_thresh_upper_str, "Distill threshold (upper)"),
-      Flag("conf_thresh", &conf_thresh_str, "Confidence threshold for large cnn"),
+      Flag("small_cnn_thresh_lower", &small_cnn_thresh_lower_str, "SmallCNN threshold (lower)"),
+      Flag("small_cnn_thresh_upper", &small_cnn_thresh_upper_str, "SmallCNN threshold (upper)"),
+      Flag("large_cnn_thresh", &large_cnn_thresh_str, "Confidence threshold for large cnn"),
       Flag("skip", &skip, "Number of frames to skip, minimal is 1"),
       Flag("nb_frames", &nb_frames, "Number of frames to read"),
       Flag("start_from", &start_from, "Where to start from"),
@@ -131,9 +131,9 @@ int main(int argc, char* argv[]) {
   std::string usage = tensorflow::Flags::Usage(argv[0], flag_list);
   const bool parse_result = tensorflow::Flags::Parse(&argc, argv, flag_list);
   const float diff_thresh = std::stof(diff_thresh_str);
-  const float conf_thresh = std::stof(conf_thresh_str);
-  const float distill_thresh_lower = std::stof(distill_thresh_lower_str);
-  const float distill_thresh_upper = std::stof(distill_thresh_upper_str);
+  const float large_cnn_thresh = std::stof(large_cnn_thresh_str);
+  const float small_cnn_thresh_lower = std::stof(small_cnn_thresh_lower_str);
+  const float small_cnn_thresh_upper = std::stof(small_cnn_thresh_upper_str);
   const size_t kSkip = std::stoi(skip);
   const size_t kNbFrames = std::stoi(nb_frames);
   const size_t kStartFrom = std::stoi(start_from);
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
   }
 
   tensorflow::Session *SmallCNN_Session = InitSession(small_cnn_graph);
-  tensorflow::Session *LargeCNN_Session = InitSession(big_cnn_graph);
+  tensorflow::Session *LargeCNN_Session = InitSession(large_cnn_graph);
   noscope::NoscopeData *data = LoadVideo(video, dumped_videos, kSkip, kNbFrames, kStartFrom);
   noscope::filters::DifferenceFilter df = GetDiffFilter(kUseBlocked, kSkipDiffDetection);
 
@@ -170,21 +170,21 @@ int main(int argc, char* argv[]) {
   auto diff_end = std::chrono::high_resolution_clock::now();
   if (!kSkipSmallCNN) {
     labeler.PopulateCNNFrames();
-    labeler.RunSmallCNN(distill_thresh_lower, distill_thresh_upper);
+    labeler.RunSmallCNN(small_cnn_thresh_lower, small_cnn_thresh_upper);
   }
   auto dist_end = std::chrono::high_resolution_clock::now();
-  labeler.RunLargeCNN(kTargetClass, conf_thresh);
-  auto yolo_end = std::chrono::high_resolution_clock::now();
+  labeler.RunLargeCNN(kTargetClass, large_cnn_thresh);
+  auto large_cnn_end = std::chrono::high_resolution_clock::now();
   std::vector<double> runtimes(4);
   {
-    std::chrono::duration<double> diff = yolo_end - start;
+    std::chrono::duration<double> diff = large_cnn_end - start;
     std::cout << "Total time: " << diff.count() << " s" << std::endl;
 
     diff = diff_end - start;
     runtimes[0] = diff.count();
     diff = dist_end - start;
     runtimes[1] = diff.count();
-    diff = yolo_end - start;
+    diff = large_cnn_end - start;
     runtimes[2] = diff.count();
     runtimes[3] = diff.count();
   }
@@ -195,8 +195,9 @@ int main(int argc, char* argv[]) {
                           kSkip,
                           kSkipSmallCNN,
                           diff_thresh,
-                          distill_thresh_lower,
-                          distill_thresh_upper,
+                          small_cnn_thresh_lower,
+                          small_cnn_thresh_upper,
+                          large_cnn_thresh,
                           runtimes);
 
   return 0;

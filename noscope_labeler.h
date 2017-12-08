@@ -34,20 +34,22 @@ class NoscopeLabeler {
 
   void RunSmallCNN(const float lower_thresh, const float upper_thresh);
 
-  void RunLargeCNN(const int class_id, const float conf_thresh);
+  void RunLargeCNN(const int class_id, const float large_cnn);
 
   void DumpConfidences(const std::string& fname,
                        const std::string& model_name,
                        const size_t kSkip,
                        const bool kSkipSmallCNN,
                        const float diff_thresh,
-                       const float distill_thresh_lower,
-                       const float distill_thresh_upper,
+                       const float small_cnn_thresh_lower,
+                       const float small_cnn_thresh_upper,
+                       const float large_cnn_thresh,
                        const std::vector<double>& runtime);
 
  private:
   constexpr static size_t kNumThreads_ = 32;
-  constexpr static size_t kMaxCNNImages_ = 512;
+  constexpr static size_t kMaxSmallCNNBatch_ = 512;
+  constexpr static size_t kMaxLargeCNNBatch_ = 128;
   constexpr static size_t kNbChannels_ = 3;
   constexpr static size_t kDiffDelay_ = 1;
 
@@ -56,9 +58,9 @@ class NoscopeLabeler {
     kSkipped,
     kDiffFiltered,
     kDiffUnfiltered,
-    kDistillFiltered,
-    kDistillUnfiltered,
-    kYoloLabeled
+    kSmallCNNFiltered,
+    kSmallCNNUnfiltered,
+    kLargeCNNLabeled
   };
 
   const size_t kNbFrames_;
@@ -71,18 +73,18 @@ class NoscopeLabeler {
   const noscope::filters::DifferenceFilter kDifferenceFilter_;
   std::vector<float> diff_confidence_;
 
-  std::vector<int> cnn_frame_ind_;
-  std::vector<float> cnn_confidence_;
+  std::vector<int> small_cnn_frame_ind_;
+  std::vector<float> small_cnn_confidence_;
 
-  std::vector<int> yolo_frame_ind_;
-  std::vector<float> yolo_confidence_;
+  std::vector<int> large_cnn_frame_ind_;
+  std::vector<float> large_cnn_confidence_;
 
   cv::Mat avg_;
 
   tensorflow::Session *large_session_;
   tensorflow::Session *small_session_;
 
-  std::vector<tensorflow::Tensor> dist_tensors_;
+  std::vector<tensorflow::Tensor> small_cnn_tensors_;
 };
 
 } // namespace noscope

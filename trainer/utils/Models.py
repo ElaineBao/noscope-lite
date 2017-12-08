@@ -207,7 +207,7 @@ def stats_from_proba(proba, Y_test):
     accuracy = sklearn.metrics.accuracy_score(predicted_labels, true_labels)
 
     num_penalties, thresh_low, thresh_high = \
-        StatsUtils.yolo_oracle(Y_test[:, 1], proba[:, 1])
+        StatsUtils.large_cnn_oracle(Y_test[:, 1], proba[:, 1])
     windowed_acc, windowed_supp = StatsUtils.windowed_accuracy(predicted_labels, Y_test)
 
     metrics = {'precision': precision,

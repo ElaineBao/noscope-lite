@@ -30,19 +30,19 @@ NoscopeLabeler::NoscopeLabeler(tensorflow::Session *SmallCNN_Session,
     frame_status_(kNbFrames_, kUnprocessed), labels_(kNbFrames_),
     kDifferenceFilter_(diff_filt),
     diff_confidence_(kNbFrames_),
-    cnn_confidence_(kNbFrames_),
-    yolo_confidence_(kNbFrames_),
-    avg_(NoscopeData::kDistResol_, CV_32FC3),
+    small_cnn_confidence_(kNbFrames_),
+    large_cnn_confidence_(kNbFrames_),
+    avg_(NoscopeData::kSmallCNNResol_, CV_32FC3),
     large_session_(LargeCNN_Session),
     small_session_(SmallCNN_Session) {
   std::ifstream is(avg_fname);
   std::istream_iterator<float> start(is), end;
   std::vector<float> nums(start, end);
 
-  if (nums.size() != NoscopeData::kDistFrameSize_) {
+  if (nums.size() != NoscopeData::kSmallCNNFrameSize_) {
     throw std::runtime_error("nums not right size");
   }
-  memcpy(avg_.data, &nums[0], NoscopeData::kDistFrameSize_ * sizeof(float));
+  memcpy(avg_.data, &nums[0], NoscopeData::kSmallCNNFrameSize_ * sizeof(float));
 
 }
 
@@ -65,43 +65,41 @@ void NoscopeLabeler::RunDifferenceFilter(const float lower_thresh,const float up
   }
   for (size_t i = kDiffDelay_; i < kNbFrames_; i++)
     if (frame_status_[i] == kDiffUnfiltered)
-      cnn_frame_ind_.push_back(i);
+      small_cnn_frame_ind_.push_back(i);
 }
 
 void NoscopeLabeler::PopulateCNNFrames() {
   auto start = std::chrono::high_resolution_clock::now();
 
-  for (size_t i = 0; i < kDiffDelay_; i++) cnn_frame_ind_.push_back(i);
+  for (size_t i = 0; i < kDiffDelay_; i++) small_cnn_frame_ind_.push_back(i);
 
-  const std::vector<float>& kDistData = all_data_.dist_data_;
-  const int kFrameSize = NoscopeData::kDistFrameSize_;
-
+  const std::vector<float>& kSmallCNNData = all_data_.small_cnn_data_;
+  const int kFrameSize = NoscopeData::kSmallCNNFrameSize_;
 
   using namespace tensorflow;
-  const size_t kNbCNNFrames = cnn_frame_ind_.size();
-  const size_t kNbLoops = (kNbCNNFrames + kMaxCNNImages_ - 1) / kMaxCNNImages_;
+  const size_t kNbCNNFrames = small_cnn_frame_ind_.size();
+  const size_t kNbLoops = (kNbCNNFrames + kMaxSmallCNNBatch_ - 1) / kMaxSmallCNNBatch_;
   const float* avg = (float *) avg_.data;
   for (size_t i = 0; i < kNbLoops; i++) {
     const size_t kImagesToRun =
-        std::min(kMaxCNNImages_, cnn_frame_ind_.size() - i * kMaxCNNImages_);
+        std::min(kMaxSmallCNNBatch_, small_cnn_frame_ind_.size() - i * kMaxSmallCNNBatch_);
     Tensor input(DT_FLOAT,
                  TensorShape({kImagesToRun,
-                             NoscopeData::kDistResol_.height,
-                             NoscopeData::kDistResol_.width,
+                             NoscopeData::kSmallCNNResol_.height,
+                             NoscopeData::kSmallCNNResol_.width,
                              kNbChannels_}));
     auto input_mapped = input.tensor<float, 4>();
     float *tensor_start = &input_mapped(0, 0, 0, 0);
     #pragma omp parallel for
     for (size_t j = 0; j < kImagesToRun; j++) {
-      const size_t kImgInd = i * kMaxCNNImages_ + j;
+      const size_t kImgInd = i * kMaxSmallCNNBatch_ + j;
       float *output = tensor_start + j * kFrameSize;
-      const float *input = &kDistData[cnn_frame_ind_[kImgInd] * kFrameSize];
+      const float *input = &kSmallCNNData[small_cnn_frame_ind_[kImgInd] * kFrameSize];
       for (size_t k = 0; k < kFrameSize; k++)
         output[k] = input[k] / 255. - avg[k];
     }
-    dist_tensors_.push_back(input);
+    small_cnn_tensors_.push_back(input);
   }
-
 
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> diff = end - start;
@@ -112,17 +110,16 @@ void NoscopeLabeler::RunSmallCNN(const float lower_thresh, const float upper_thr
   using namespace tensorflow;
 
   // Round up
-  const size_t kNbCNNFrames = cnn_frame_ind_.size();
-  const size_t kNbLoops = (kNbCNNFrames + kMaxCNNImages_ - 1) / kMaxCNNImages_;
+  const size_t kNbSmallCNNFrames = small_cnn_frame_ind_.size();
+  const size_t kNbLoops = (kNbSmallCNNFrames + kMaxSmallCNNBatch_ - 1) / kMaxSmallCNNBatch_;
 
   for (size_t i = 0; i < kNbLoops; i++) {
     const size_t kImagesToRun =
-        std::min(kMaxCNNImages_, cnn_frame_ind_.size() - i * kMaxCNNImages_);
-    auto input = dist_tensors_[i];
+        std::min(kMaxSmallCNNBatch_, small_cnn_frame_ind_.size() - i * kMaxSmallCNNBatch_);
+    auto input = small_cnn_tensors_[i];
     /*cudaHostRegister(&(input.tensor<float, 4>()(0, 0, 0, 0)),
                      kImagesToRun * kFrameSize * sizeof(float),
                      cudaHostRegisterPortable);*/
-
 
     std::vector<tensorflow::Tensor> outputs;
     std::vector<std::pair<string, tensorflow::Tensor>> inputs = {
@@ -138,16 +135,17 @@ void NoscopeLabeler::RunSmallCNN(const float lower_thresh, const float upper_thr
       auto output_mapped = outputs[0].tensor<float, 2>();
       for (size_t j = 0; j < kImagesToRun; j++) {
         Status s;
-        const int kInd = cnn_frame_ind_[i * kMaxCNNImages_ + j];
-        cnn_confidence_[kInd] = output_mapped(j, 1);
+        const int kInd = small_cnn_frame_ind_[i * kMaxSmallCNNBatch_ + j];
+        small_cnn_confidence_[kInd] = output_mapped(j, 1);
         if (output_mapped(j, 1) < lower_thresh) {
           labels_[kInd] = false;
-          s = kDistillFiltered;
+          s = kSmallCNNFiltered;
         } else if (output_mapped(j, 1) > upper_thresh) {
           labels_[kInd] = true;
-          s = kDistillFiltered;
+          s = kSmallCNNFiltered;
         } else {
-          s = kDistillUnfiltered;
+          s = kSmallCNNUnfiltered;
+          large_cnn_frame_ind_.push_back(kInd);
         }
         frame_status_[kInd] = s;
       }
@@ -156,44 +154,58 @@ void NoscopeLabeler::RunSmallCNN(const float lower_thresh, const float upper_thr
 }
 
 
-void NoscopeLabeler::RunLargeCNN(const int class_id, const float conf_thresh) {
-  for (size_t i = 0; i < kNbFrames_; i++) {
-    // Run LargeCNN on every unprocessed frame
-    using namespace tensorflow;
-    std::vector<Tensor> outputs;
+void NoscopeLabeler::RunLargeCNN(const int class_id, const float large_cnn_thresh) {
+  using namespace tensorflow;
+
+  // Round up
+  const size_t kNbLargeCNNFrames = large_cnn_frame_ind_.size();
+  const size_t kNbLoops = (kNbLargeCNNFrames + kMaxLargeCNNBatch_ - 1) / kMaxLargeCNNBatch_;
+  const std::vector<uint8_t>& kLargeCNNData = all_data_.large_cnn_data_;
+  const int kLargeCNNFrameSize = NoscopeData::kLargeCNNFrameSize_;
+
+  for (size_t i_loop = 0; i_loop < kNbLoops; i_loop++) {
+    const size_t kImagesToRun =
+        std::min(kMaxLargeCNNBatch_, large_cnn_frame_ind_.size() - i_loop * kMaxLargeCNNBatch_);
     Tensor input_tensor(DT_UINT8,
-                 TensorShape({1,
-                             NoscopeData::kYOLOResol_.height,
-                             NoscopeData::kYOLOResol_.width,
+                 TensorShape({kImagesToRun,
+                             NoscopeData::kLargeCNNResol_.height,
+                             NoscopeData::kLargeCNNResol_.width,
                              kNbChannels_}));
     auto input_mapped = input_tensor.tensor<uint8_t, 4>();
     uint8_t *tensor_start = &input_mapped(0, 0, 0, 0);
-    const std::vector<uint8_t>& kYoloData = all_data_.yolo_data_;
-    const uint8_t *input = &kYoloData[i * all_data_.kYOLOFrameSize_];
-    uint8_t *normalized_input = tensor_start; //+ i * all_data_.kYOLOFrameSize_;
 
-    for (size_t k = 0; k < all_data_.kYOLOFrameSize_; k++)
-      normalized_input[k] = input[k];
-    const Tensor& resized_tensor = input_tensor;
-    std::cout<<"image shape:" << resized_tensor.shape().DebugString() << ",tensor type:"<< resized_tensor.dtype();
-
-    std::vector<string> output_layer ={ "detection_boxes:0", "detection_scores:0", "detection_classes:0", "num_detections:0" };
-    tensorflow::Status run_status = large_session_->Run({{"image_tensor", resized_tensor}},
-                                   output_layer, {}, &outputs);
-    tensorflow::TTypes<float>::Flat scores = outputs[1].flat<float>();
-    tensorflow::TTypes<float>::Flat classes = outputs[2].flat<float>();
-    tensorflow::TTypes<float>::Flat num_detections = outputs[3].flat<float>();
-
-    float class_score = 0;
-    for(size_t j = 0; j < num_detections(0);++j)
-    {
-        if (classes(j) == class_id && scores(j) > class_score)
-          class_score = scores(j);
+    #pragma omp parallel for
+    for (size_t j_im = 0; j_im < kImagesToRun; j_im++) {
+      const size_t kImgInd = i_loop * kMaxLargeCNNBatch_ + j_im;
+      float *output = tensor_start + j_im * kLargeCNNFrameSize;
+      const uint8_t *input = &kLargeCNNData[large_cnn_frame_ind_[kImgInd] * kLargeCNNFrameSize];
+      for (size_t k = 0; k < kLargeCNNFrameSize; k++)
+        output[k] = input[k];
     }
-    yolo_confidence_[i] = class_score;
-    labels_[i] = class_score > conf_thresh;
-    frame_status_[i] = kYoloLabeled;
-  }
+
+    std::vector<tensorflow::Tensor> outputs;
+    tensorflow::Status run_status = large_session_->Run({{"image_tensor", input_tensor}},
+                                    {"detection_boxes:0", "detection_scores:0",
+                                    "detection_classes:0", "num_detections:0"}, {}, &outputs);
+
+    {
+      tensorflow::TTypes<float>::Flat scores = outputs[1].flat<float>();
+      tensorflow::TTypes<float>::Flat classes = outputs[2].flat<float>();
+      tensorflow::TTypes<float>::Flat num_detections = outputs[3].flat<float>();
+
+      for (size_t j_im = 0; j_im < kImagesToRun; j_im++) {
+        const int kInd = large_cnn_frame_ind_[i_loop * kMaxLargeCNNBatch_ + j_im];
+        float class_score = 0;
+        for(size_t i_det = 0; i_det < num_detections(j_im);++i_det)
+        {
+            if (classes(j_im,i_det) == class_id && scores(j_im,i_det) > class_score)
+              class_score = scores(j_im, i_det);
+        }
+        large_cnn_confidence_[kInd] = class_score;
+        labels_[kInd] = class_score > large_cnn_thresh;
+        frame_status_[kInd] = kLargeCNNLabeled;
+      }
+    }
 }
 
 void NoscopeLabeler::DumpConfidences(const std::string& fname,
@@ -201,8 +213,9 @@ void NoscopeLabeler::DumpConfidences(const std::string& fname,
                                   const size_t kSkip,
                                   const bool kSkipSmallCNN,
                                   const float diff_thresh,
-                                  const float distill_thresh_lower,
-                                  const float distill_thresh_upper,
+                                  const float small_cnn_thresh_lower,
+                                  const float small_cnn_thresh_upper,
+                                  const float large_cnn_thresh,
                                   const std::vector<double>& runtimes) {
   std::ofstream csv_file;
   csv_file.open(fname);
@@ -211,21 +224,22 @@ void NoscopeLabeler::DumpConfidences(const std::string& fname,
   std::copy(runtimes.begin(), runtimes.end(), std::ostream_iterator<double>(rt, " "));
 
   csv_file << "# diff_thresh: "  << diff_thresh <<
-      ", distill_thresh_lower: " << distill_thresh_lower <<
-      ", distill_thresh_upper: " << distill_thresh_upper <<
+      ", small_cnn_thresh_lower: " << small_cnn_thresh_lower <<
+      ", small_cnn_thresh_upper: " << small_cnn_thresh_upper <<
+      ", large_cnn_thresh: " << large_cnn_thresh <<
       ", skip: " << kSkip <<
       ", skip_cnn: " << kSkipSmallCNN <<
       ", runtime: " << rt.str() << "\n";
   csv_file << "# model: " << model_name <<
       ", diff_detection: " << kDifferenceFilter_.name << "\n";
 
-  csv_file << "# frame,status,diff_confidence,cnn_confidence,yolo_confidence,label\n";
+  csv_file << "# frame,status,diff_confidence,small_cnn_confidence,large_cnn_confidence,label\n";
   for (size_t i = 0; i < kNbFrames_; i++) {
     csv_file << (kSkip*i + 1) << ",";
     csv_file << frame_status_[i] << ",";
     csv_file << diff_confidence_[i] << ",";
-    csv_file << cnn_confidence_[i] << ",";
-    csv_file << yolo_confidence_[i] << ",";
+    csv_file << small_cnn_confidence_[i] << ",";
+    csv_file << large_cnn_confidence_[i] << ",";
     csv_file << labels_[i] << "\n";
 
     // repeat the previous label for skipped frames

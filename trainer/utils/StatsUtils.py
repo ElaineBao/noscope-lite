@@ -82,7 +82,7 @@ def windowed_accuracy(Y_pred, Y_true, WINDOW=15, THRESH=10):
 
 # Assumes two classes
 # TODO: check that this is actually correct
-def yolo_oracle(Y_true, Y_probs, fpr_thresh=0.01, fnr_thresh=0.01):
+def large_cnn_oracle(Y_true, Y_probs, fpr_thresh=0.01, fnr_thresh=0.01):
     fpr, tpr, thresholds = sklearn.metrics.roc_curve(Y_true, Y_probs)
     fnr = 1 - tpr
 

@@ -192,7 +192,7 @@ def confidences_to_csv(csv_fname, confidences, OBJECT):
     col_names = ['frame', 'labels']
     labels = map(lambda conf: [{'confidence': conf, 'object_name': OBJECT}],
                  confidences)
-    # because past fuccboi DK make yolo_standalone 1-indexed
+    # because past fuccboi DK make large_cnn_standalone 1-indexed
     frames = range(1, len(confidences) + 1)
     output_csv(csv_fname, zip(frames, labels), col_names)
 
