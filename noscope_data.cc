@@ -12,7 +12,7 @@ const cv::Size NoscopeData::kSmallCNNResol_(50, 50);
 
 NoscopeData::NoscopeData(const std::string& fname,
                    const size_t kSkip, const size_t kNbFrames, const size_t kStart) :
-    kNbFrames_(kNbFrames / kSkip),
+    kNbFrames_((kNbFrames + kSkip - 1) / kSkip),
     kSkip_(kSkip),
     large_cnn_data_(kLargeCNNFrameSize_ * kNbFrames_),
     diff_data_(kDiffFrameSize_ * kNbFrames_),
