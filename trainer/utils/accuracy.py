@@ -31,8 +31,10 @@ def parse_gt_csv(f, label, start, end):
 	nt = namedtuple('GTObj', ['frame', 'object', 'confidence'])
 	for row in reader:
 		# frame,status,diff_confidence,small_cnn_confidence,large_cnn_confidence,label
-		if row[0] >= start and row[0] < end:
-			frame_objs.append(nt(row[0]-start, label, row[-1]))
+		frame_idx = int(row[0])
+		label_pred = int(row[-1])
+		if frame_idx >= start and frame_idx < end:
+			frame_objs.append(nt(frame_idx-start, label, label_pred))
 
 	return frame_objs
 
@@ -182,7 +184,7 @@ def _OLD_window_noscope(frames, noscope_stats, gt_indicator, DIFF_THRES, CNN_LOW
 
 	# print len(diff_indicator), len(cnn_indicator)
 
-	if (not noscope_stats['skip_cnn']):
+	if (not noscope_stats['skip_small_cnn']):
 		return diff_indicator & cnn_indicator
 	else:
 		return diff_indicator
@@ -244,7 +246,7 @@ def main(object_name,
 	# DIFF_THRES = noscope_stats['diff_thresh']
 	# CNN_LOWER_THRES = noscope_stats['small_cnn_thresh_lower']
 	# CNN_UPPER_THRES = noscope_stats['small_cnn_thresh_upper']
-	if noscope_stats['skip_cnn']:
+	if noscope_stats['skip_small_cnn']:
 		print 'Note: cnn was skipped?'
 	# print DIFF_THRES, CNN_LOWER_THRES, CNN_UPPER_THRES
 

@@ -3,10 +3,8 @@
 from utils import accuracy as acc
 from utils import optimizer as opt
 import datetime
-import uuid
 import stat
 import json
-import sys
 import os
 
 # Dir Structure (e.g. video is coral-reef-long.mp4)
@@ -75,13 +73,13 @@ time {noscope_app_path} \\
     --small_cnn_thresh_lower={small_cnn_lower_thres} \\
     --small_cnn_thresh_upper={small_cnn_upper_thres} \\
     --large_cnn_thresh={large_cnn_thres} \\
-    --target_object_id={object_id}
+    --target_object_id={object_id}    \\
     --skip_small_cnn={skip_small_cnn} \\
     --skip_diff_detection={skip_dd} \\
     --skip={kskip} \\
     --avg_fname={cnn_avg_path} \\
     --small_cnn_graph={small_cnn_path} \\
-    --large_cnn_graph={large_cnn_path}
+    --large_cnn_graph={large_cnn_path}  \\
     --video={video_path} \\
     --confidence_csv={output_csv} \\
     --start_from={start_frame} \\
@@ -103,7 +101,7 @@ if (os.path.exists(experiment_dir)):
 	print
 
 try:
-	os.mkdir(experiment_dir)
+	os.makedirs(experiment_dir)
 except:
 	print experiment_dir, "already exists"
 
@@ -213,7 +211,7 @@ for cnn, dd in pipelines:
 ################################################################################
 summary_file = open(OUTPUT_SUMMARY_CSV, 'w')
 summary_file.write(
-	'target_fn, target_fp, skip_dd, skip_cnn, dd, dd_thres, cnn, cnn_upper_thres, cnn_lower_thres, accuracy, fn, fp, num_tp, num_tn, runtime\n')
+	'target_fn, target_fp, skip_dd, skip_small_cnn, dd, dd_thres, small_cnn, small_cnn_upper_thres, small_cnn_lower_thres, accuracy, fn, fp, num_tp, num_tn, runtime\n')
 summary_file.flush()
 truth_csv = os.path.join(TRUTH_DIR_PREFIX, video_name + '.csv')
 
@@ -229,7 +227,7 @@ for error_rate in TARGET_ERROR_RATES:
 
 	# find the best configuration (find the optimal params for all of them)
 	params_list = []
-	for pipeline_path, cnn_path, dd in pipeline_paths:
+	for pipeline_path, small_cnn_path, dd in pipeline_paths:
 		params = opt.main(
 			object_id,
 			truth_csv, val_csv_path,
@@ -246,7 +244,7 @@ for error_rate in TARGET_ERROR_RATES:
 			ref_image = dd[1]
 
 		params['pipeline_path'] = pipeline_path
-		params['cnn_path'] = cnn_path
+		params['small_cnn_path'] = small_cnn_path
 		params['dd_path'] = diff_detection_weights
 		params['dd_ref_index'] = ref_image
 		params['use_blocked'] = use_blocked
@@ -278,15 +276,15 @@ for error_rate in TARGET_ERROR_RATES:
 			noscope_app_path=NOSCOPE_APP_PATH,
 			dd_thres=best_params['threshold_diff'],
 			large_cnn_thres=0,
-			small_cnn_lower_thres=best_params['threshold_lower_cnn'],
-			small_cnn_upper_thres=best_params['threshold_upper_cnn'],
+			small_cnn_lower_thres=best_params['threshold_lower_small_cnn'],
+			small_cnn_upper_thres=best_params['threshold_upper_small_cnn'],
 			skip_dd=int(best_params['skip_dd']),
-			skip_small_cnn=int(best_params['skip_cnn']),
+			skip_small_cnn=int(best_params['skip_small_cnn']),
 			kskip=best_params['threshold_skip_distance'],
 			ref_image=int(best_params['dd_ref_index'] / best_params['threshold_skip_distance']),
 			diff_detection_weights=best_params['dd_path'],
 			use_blocked=best_params['use_blocked'],
-			small_cnn_path=best_params['cnn_path'],
+			small_cnn_path=best_params['small_cnn_path'],
 			large_cnn_path=large_cnn_path,
 			cnn_avg_path=cnn_avg_path,
 			video_path=video_path,
@@ -316,16 +314,16 @@ for error_rate in TARGET_ERROR_RATES:
 		f.write(json.dumps(accuracy, sort_keys=True, indent=4))
 
 	summary_file.write(
-		'{target_fn}, {target_fp}, {skip_dd}, {skip_cnn}, {dd}, {dd_thres}, {cnn}, {cnn_upper_thres}, {cnn_lower_thres}, {acc}, {fn}, {fp}, {tp}, {tn}, {runtime}\n'.format(
+		'{target_fn}, {target_fp}, {skip_dd}, {skip_small_cnn}, {dd}, {dd_thres}, {small_cnn}, {small_cnn_upper_thres}, {small_cnn_lower_thres}, {acc}, {fn}, {fp}, {tp}, {tn}, {runtime}\n'.format(
 			target_fn=error_rate,
 			target_fp=error_rate,
 			skip_dd=best_params['skip_dd'],
-			skip_cnn=best_params['skip_cnn'],
+			skip_small_cnn=best_params['skip_small_cnn'],
 			dd=best_params['dd_path'],
 			dd_thres=best_params['threshold_diff'],
-			cnn=best_params['cnn_path'],
-			cnn_upper_thres=best_params['threshold_upper_cnn'],
-			cnn_lower_thres=best_params['threshold_lower_cnn'],
+			small_cnn=best_params['small_cnn_path'],
+			small_cnn_upper_thres=best_params['threshold_upper_small_cnn'],
+			small_cnn_lower_thres=best_params['threshold_lower_small_cnn'],
 			acc=accuracy['accuracy'],
 			fn=accuracy['false_negative'],
 			fp=accuracy['false_positive'],

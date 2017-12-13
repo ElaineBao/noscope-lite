@@ -30,7 +30,7 @@ def cnn_param_grid_search(p):
 		'num_cnn_evals': diff_sum * (v.WINDOW_SIZE // video_stats['skip_distance']) - \
 		                 (v.WINDOW_SIZE - ((TRAIN_END_IDX - TRAIN_START_IDX) % v.WINDOW_SIZE)),
 		'skip_dd': False,
-		'skip_cnn': False,
+		'skip_small_cnn': False,
 	}
 	for thres in thresholds:
 		cnn_indicator = cnn_confidences >= thres
@@ -72,8 +72,8 @@ def cnn_param_grid_search(p):
 	# assume YOLO will catch everything that gets passed through
 	params = accuracies[lower_idx]
 	params['threshold_diff'] = diff_thres
-	params['threshold_lower_cnn'] = lower_thres
-	params['threshold_upper_cnn'] = upper_thres
+	params['threshold_lower_small_cnn'] = lower_thres
+	params['threshold_upper_small_cnn'] = upper_thres
 
 	positive_passthrough = fn[upper_idx] - fn[lower_idx]
 	negative_passthrough = fp[lower_idx] - fp[upper_idx]
@@ -118,7 +118,7 @@ def runtime_estimator(params, TARGET_CNN_FALSE_NEGATIVE_RATE):
 	runtime_cost += COST_CNN * params['num_cnn_evals']
 	runtime_cost += COST_YOLO * params['num_gt_evals']
 
-	if (params['skip_cnn'] == False):
+	if (params['skip_small_cnn'] == False):
 		runtime_cost += 1080000
 
 	if (params['false_negative'] > 1.5 * TARGET_CNN_FALSE_NEGATIVE_RATE):
@@ -172,7 +172,7 @@ def param_search(gt_frames, noscope_stats, noscope_frames,
 		# collects all the params for parallel optimization
 		diff_confidences_grid = np.linspace(diff_min, diff_max, GRID_SIZE)
 
-		cnn_confidences = np.asarray(map(lambda x: x['cnn_confidence'], noscope_frames))
+		cnn_confidences = np.asarray(map(lambda x: x['small_cnn_confidence'], noscope_frames))
 
 		# zero out some confidences to simulate skipping
 		tmp = np.copy(cnn_confidences[::skip_distance])
