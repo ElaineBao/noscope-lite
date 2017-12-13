@@ -292,11 +292,14 @@ def learn_and_eval(model, data, nb_epoch=2, batch_size=128,
 # NOTE: assumes first two parameters are: (image_size, nb_classes)
 def try_params(model_gen, params, data,
                output_dir, base_fname, model_name, OBJECT,
-               regression=False, nb_epoch=2, validation_data=(None, None)):
+               regression=False, nb_epoch=2, batch_size=256, validation_data=(None, None)):
     def metrics_names(metrics):
         return sorted(metrics.keys())
     def metrics_to_list(metrics):
         return map(lambda key: metrics[key], metrics_names(metrics))
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
     summary_csv_fname = os.path.join(
             output_dir, base_fname + '_' + model_name + '_summary.csv')
@@ -316,7 +319,7 @@ def try_params(model_gen, params, data,
         if regression:
             train_time = run_model(model, data, nb_epoch=nb_epoch,
                     validation_data=validation_data)
-            metrics = evaluate_model_regression(model, X_test, Y_test)
+            metrics = evaluate_model_regression(model, X_test, Y_test, batch_size=batch_size)
         else:
             if nb_classes == 2:
                 train_time, metrics = learn_and_eval(model, data,
@@ -324,12 +327,12 @@ def try_params(model_gen, params, data,
             else:
                 train_time = run_model(model, data, nb_epoch=nb_epoch,
                         validation_data=validation_data)
-                metrics = evaluate_model_multiclass(model, X_test, Y_test)
+                metrics = evaluate_model_multiclass(model, X_test, Y_test, batch_size=batch_size)
 
         # Output predictions and save the model
         # Redo some computation to save my sanity
-        conf1 = model.predict(X_train, batch_size=256, verbose=0)
-        conf2 = model.predict(X_test,  batch_size=256, verbose=0)
+        conf1 = model.predict(X_train, batch_size=batch_size, verbose=0)
+        conf2 = model.predict(X_test,  batch_size=batch_size, verbose=0)
         conf = np.concatenate([conf1, conf2])
         if len(conf.shape) > 1:
             assert len(conf.shape) == 2

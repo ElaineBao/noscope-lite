@@ -15,4 +15,5 @@ python train_specialized_model.py \
   --base_name ${VIDEO_NAME} \
   --objects $OBJECT \
   --num_frames $NUM_FRAMES \
-  --start_frame $START_FRAME
+  --start_frame $START_FRAME \
+  --batch_size 128

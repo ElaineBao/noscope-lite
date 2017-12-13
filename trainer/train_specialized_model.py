@@ -91,6 +91,7 @@ def main():
 	parser.add_argument('--avg_fname', required=True)
 	parser.add_argument('--num_frames', type=int, help='Number of frames')
 	parser.add_argument('--start_frame', type=int)
+	parser.add_argument('--batch_size', type=int, help='batch size for validate small cnn')
 	args = parser.parse_args()
 
 	def check_args(args):
@@ -123,7 +124,8 @@ def main():
 			'convnet',
 			objects[0],
 			regression=False,
-			nb_epoch=nb_epoch)
+			nb_epoch=nb_epoch,
+			batch_size=args.batch_size)
 
 if __name__ == '__main__':
 	main()

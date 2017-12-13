@@ -49,8 +49,8 @@ class NoscopeLabeler {
 
  private:
   constexpr static size_t kNumThreads_ = 32;
-  constexpr static size_t kMaxSmallCNNBatch_ = 512;
-  constexpr static size_t kMaxLargeCNNBatch_ = 128;
+  constexpr static size_t kMaxSmallCNNBatch_ = 256;
+  constexpr static size_t kMaxLargeCNNBatch_ = 32;
   constexpr static size_t kNbChannels_ = 3;
   constexpr static size_t kDiffDelay_ = 1;
 

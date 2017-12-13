@@ -53,7 +53,7 @@ void NoscopeLabeler::RunDifferenceFilter(const float lower_thresh,const float up
   for (size_t i = kDiffDelay_; i < kNbFrames_; i++) {
     const uint8_t *kRefImg = const_ref ?
         &kFrameData[kRef * kFrameSize] :
-        &kFrameData[(i - kDiffDelay_) * kFrameSize];
+        &kFrameData[(i - kDiffDelay_) * kFrameSize];  //use block=1, use specific frame; use block=0, use kDiffDelay_ frame.
     float tmp = kDifferenceFilter_.fp(&kFrameData[i * kFrameSize], kRefImg);
     diff_confidence_[i] = tmp;
     if (tmp < lower_thresh) {
@@ -238,7 +238,7 @@ void NoscopeLabeler::DumpConfidences(const std::string& fname,
       ", small_cnn_thresh_upper: " << small_cnn_thresh_upper <<
       ", large_cnn_thresh: " << large_cnn_thresh <<
       ", skip: " << kSkip <<
-      ", skip_cnn: " << kSkipSmallCNN <<
+      ", skip_small_cnn: " << kSkipSmallCNN <<
       ", runtime: " << rt.str() << "\n";
   csv_file << "# model: " << model_name <<
       ", diff_detection: " << kDifferenceFilter_.name << "\n";

@@ -59,7 +59,8 @@ def get_differences(csv_fname, OBJECT, limit=None, interval=1, delay=1):
 
 def get_binary(csv_fname, OBJECTS=['person'], limit=None, start=0, WINDOW=30):
     df = pd.read_csv(csv_fname)
-    df = df[df['object_name'].isin(OBJECTS)]
+    # df = df[df['object_name'].isin(OBJECTS)]
+    df = df[df['label']==1] #目前只有一个物体，可以直接=1这样，后面如果要扩展成多个物体，则需要把模型的输出csv的label改成如'person'，'car'等label
     groups = df.set_index('frame') # 同一帧下检测到的特定object作为一个group
     counts = map(lambda i: i in groups.index, range(start, limit + start)) #哪些帧有物体
     counts = np.array(counts)

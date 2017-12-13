@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
       Flag("large_cnn_thresh", &large_cnn_thresh_str, "Confidence threshold for large cnn"),
       Flag("skip", &skip, "Number of frames to skip, minimal is 1"),
       Flag("nb_frames", &nb_frames, "Number of frames to read"),
-      Flag("start_from", &start_from, "Where to start from"),
+      Flag("start_from", &start_from, "Frame to start from, 1-indexed"),
       Flag("target_object_id", &target_object_id, "class id in big cnn model (trained in coco db)"),
       Flag("skip_small_cnn", &skip_small_cnn, "0/1 skip small CNN or not"),
       Flag("skip_diff_detection", &skip_diff_detection, "0/1 skip diff detection or not"),
